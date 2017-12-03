@@ -115,7 +115,7 @@ class SortableTable extends Component {
                                              unpaginatedSortedRowData;
 
     const rowsEls = sortedRowData.map((obj, index) => {
-      const columns = filteredTableDataByHeaders.map( (param, _) => {
+      const columns = filteredTableDataByHeaders.map( (param, i) => {
         return (
           this.columnItem(obj, param, index)
         )
