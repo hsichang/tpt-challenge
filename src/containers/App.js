@@ -4,10 +4,9 @@ import Data from '../data/data.json';
 
 class App extends Component {
   render() {
-    // change dataParam to dataParam or something.
     const tableConfig = { caption: "Example Table with Optional Sortable Headers",
                           config: {
-                            itemsPerPage: 5, // Int - if present && gt 0, turns on pagination
+                            itemsPerPage: 0, // Int - if present && gt 0, turns on pagination
                             headers: [
                               // {
                               //  sortID: Int - order that the column will appear in the table starting from 0

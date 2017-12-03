@@ -12,7 +12,7 @@ class SortableTable extends Component {
     };
   }
 
-  handleClick(index) {
+  handleHeaderClick(index) {
     const { orderBy, orderAsc } = this.state;
 
     this.setState({
@@ -52,12 +52,30 @@ class SortableTable extends Component {
     return arr.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
   }
 
-  // handle pagination buttons
+  getLastPage(data) {
+    const { itemsPerPage } = this.state;
+    return data.length / itemsPerPage;
+  }
+
+  buildButton(classes, display_txt, clickFn) {
+    return (
+      <div className={ classes }
+           onClick={ () => clickFn() }>
+        { display_txt }
+      </div>
+    )
+  }
+
+  handlePaginationClick(delta) {
+    const { currentPage } = this.state;
+    this.setState({ currentPage: currentPage + delta});
+  }
 
   render() {
     const {
       orderBy,
       orderAsc,
+      currentPage,
     } = this.state;
 
     const {
@@ -83,7 +101,7 @@ class SortableTable extends Component {
       return (
         <th className={ headerClasses } 
             key={ sortID }
-            onClick={ sortable ? this.handleClick.bind(this, index) : null}
+            onClick={ sortable ? this.handleHeaderClick.bind(this, index) : null}
             >
           { title }
         </th>
@@ -92,7 +110,7 @@ class SortableTable extends Component {
 
     const unpaginatedSortedRowData = orderAsc ? _.sortBy(data, [(i) => { return i[filteredTableDataByHeaders[orderBy]]}]) :
                                                 _.sortBy(data, [(i) => { return i[filteredTableDataByHeaders[orderBy]]}]).reverse();
-    const isTablePaginated = (itemsPerPage && itemsPerPage > 0);
+    const isTablePaginated = (itemsPerPage > 0);
     const sortedRowData = isTablePaginated ? this.paginateData(unpaginatedSortedRowData) :
                                              unpaginatedSortedRowData;
 
@@ -110,17 +128,37 @@ class SortableTable extends Component {
       );
     });
 
+    const onFirstPage = currentPage === 0;
+    const onLastPage = currentPage + 1 === this.getLastPage(unpaginatedSortedRowData);
+
+    const paginationControlsEl = 
+      ( <div className="controls_container">
+          <div className="toggle_btn_container">
+            { !onFirstPage && this.buildButton("btn", "prev", this.handlePaginationClick.bind(this, -1)) }
+          </div>
+          <div className="display_btn_container">
+            { currentPage + 1 }
+          </div>          
+          <div className="toggle_btn_container">
+            { !onLastPage && this.buildButton("btn", "next", this.handlePaginationClick.bind(this, 1)) }
+          </div>
+        </div>
+      );
+
     const captionEl = caption ? <caption>{ caption }</caption> : 
                                 null;
     const headerEl = <thead><tr>{ headersEls }</tr></thead>;
     const rowsEl = <tbody>{ rowsEls }</tbody>;
 
     return (
-      <table>
-        { captionEl }
-        { headerEl }
-        { rowsEl }
-      </table>
+      <div className="table_container">
+        <table>
+          { captionEl }
+          { headerEl }
+          { rowsEl }
+        </table>
+        { isTablePaginated && paginationControlsEl }
+      </div>
     )
   }
 }
