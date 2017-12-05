@@ -21,25 +21,51 @@ class SortableTable extends Component {
   }
 
   containsImageUrl(str) {
-    return (
-      str.match(/\.(jpeg|jpg|gif|png|bmp)/) !== null
-    );
+    return str.match(/\.(jpeg|jpg|gif|png|bmp)/) !== null;
   }
 
-  columnItem(obj, param, index) {
+  columnItem(obj, param, keyStr = '') {
     const isImg = this.containsImageUrl(obj[param]);
     const displayEl = isImg ? <img src={ obj[param] }
                                    alt="thumbnail"
-                                   className="thumbnail_img" /> :
+                                   className="thumbnail_img"
+                                   key={ keyStr ? keyStr : null} /> :
                               obj[param];
+    return displayEl;
+  }
 
+  columnItems(obj, param, headerConfig, index) {
+    const columnItems = obj[param].map((item, i) => {
+                          const keyStr = `${ headerConfig.objectConfig.dataParam } - ${ i }`; 
+                          return this.columnItem(item, headerConfig.objectConfig.dataParam, keyStr);
+                        });
+    return columnItems;
+  }
+  
+  buildColumnItem(obj, param, index, headerConfig) {
+    const isArray = _.get(headerConfig, 'isObject', false);;
+    const columnItem = isArray ? this.columnItems(obj, param, headerConfig, index) :
+                                 this.columnItem(obj, param);
     return (
       <td key={`${param} - ${index}`}>
-        { displayEl }
+        { columnItem } 
       </td>
     )
   }
 
+  buildRowEls(filteredRowData, tableHeadersArr, tableHeaderConfigOrdered) {
+    return filteredRowData.map((obj, index) => {
+      const columns = tableHeadersArr.map((param, i) => this.buildColumnItem(obj, param, index, tableHeaderConfigOrdered[i]));
+
+      return (
+        <tr key={ index }>
+          { columns }
+        </tr>
+      );
+    });
+  };
+
+  // move to utils
   buildButton(classes, display_txt, clickFn) {
     return (
       <div className={ classes }
@@ -49,13 +75,16 @@ class SortableTable extends Component {
     )
   }
 
-  handleFilterChange(dataParam, evt) {
+  handleFilterChange(dataParam, filterType, tableHeaderConfig = {}, evt) {
     const { activeFilters } = this.state;
+    const filterParam = tableHeaderConfig.isObject ? tableHeaderConfig.filterConfig.filterParam :
+                                                     null;
     const filterObj = { dataParam,
+                        filterParam,
+                        isObject: _.get(tableHeaderConfig, "isObject", false),
                         value: evt.target.value };
 
     const isRemoveable = evt.target.value === "";
-
     const activeFiltersWithoutPreviousFilter = _.filter(activeFilters, (obj) => obj.dataParam !== dataParam);
     const updatedActiveFilters = !isRemoveable ? activeFiltersWithoutPreviousFilter.concat(filterObj) :
                                                  activeFiltersWithoutPreviousFilter;
@@ -65,23 +94,25 @@ class SortableTable extends Component {
 
   // move to utils
   recursiveFilterByActiveFilters(data, filters) {
-    let filteredByParam = data;
-    filters.map( (filterObj) => {
-      filteredByParam = filteredByParam.filter( datum => { 
-        return datum[filterObj.dataParam] === filterObj.value;
-      })
+    let dataFilteredByParam = data;
+    filters.map( ({ dataParam, value, isObject, filterParam }) => {
+      dataFilteredByParam = isObject ? dataFilteredByParam.filter((rowData) => {
+                                                                    return rowData[dataParam].some((subData) => {
+                                                                      return subData[filterParam] === value;
+                                                                    })
+                                                                  })
+                                        :
+                                        dataFilteredByParam.filter( datum => { 
+                                          return datum[dataParam] === value;
+                                        });
       return true;
     })
 
-    return filteredByParam;
+    return dataFilteredByParam;
   }
 
-  buildFilterHeader(data, dataParam, displayText) {
-    const rawDataForSelectOptions = _.uniqBy(data, dataParam);
-    const rawArrayForSelectOptions = rawDataForSelectOptions.map(datum => datum[dataParam]);
-    const sortedArrayForSelectOptions = rawArrayForSelectOptions.sort();
-    const filterDefaultOptionEl = <option value="">{ displayText }</option>;
-    const filterOptionsEls = sortedArrayForSelectOptions.map( (value, index) => {
+  buildFilterOptionsFromFlatData(arr) {
+    return arr.map( (value, index) => {
       return (
         <option value={ value }
                 key={ index } >
@@ -89,25 +120,46 @@ class SortableTable extends Component {
         </option>
       )
     });
+  }
 
+  buildFilterOptionsFromNestedData(data, headerConfig) {
+    const { 
+            filterConfig: { 
+              filterParam, 
+            },
+          } = headerConfig;
+
+    const flattenedData = [].concat.apply([], data);
+    const uniqueFlattenedData = _.uniqBy(flattenedData, filterParam);
+    const rawArrayForSelectOptions = uniqueFlattenedData.map(datum => datum[filterParam]);
+    const sortedArrayForSelectOptions = rawArrayForSelectOptions.sort();
+
+    return this.buildFilterOptionsFromFlatData(sortedArrayForSelectOptions);
+  }
+
+  buildFilterHeader(data, dataParam, headerText, filterType, tableHeaderConfig) {
+    const rawDataForSelectOptions = _.uniqBy(data, dataParam);
+    const rawArrayForSelectOptions = rawDataForSelectOptions.map(datum => datum[dataParam]);
+    const sortedArrayForSelectOptions = rawArrayForSelectOptions.sort();
+    const filterDefaultOptionEl = <option value="">{ headerText }</option>;
+    
+    // TODO: expand + generalize to support other types of filtering
+    const filterOptionsEls = filterType === 'auto' ? this.buildFilterOptionsFromFlatData(sortedArrayForSelectOptions) :
+                                                     this.buildFilterOptionsFromNestedData(sortedArrayForSelectOptions, tableHeaderConfig);
+    const handleFn = this.handleFilterChange.bind(this, dataParam, filterType, tableHeaderConfig);
     return (
       <select id={ dataParam }
-              onChange={ this.handleFilterChange.bind(this, dataParam) }>
+              onChange={ handleFn }>
         { filterDefaultOptionEl }
         { filterOptionsEls }
       </select>
     ); 
   }
-  // TODO: support for reps...
 
   // Nice to haves:
-  // Searhable filter (1hour)
-  // Redux (approx: 1hour)
+  // Searchable filter (1hour)
+  // Redux (approx: 30mins - 1hour)
   // Styling (approx: 30mins)
-
-  // change displayText to displayText
-
-  // import getTopicCard from '../components/Topic/Cards';
   render() {
     const {
       orderBy,
@@ -118,29 +170,29 @@ class SortableTable extends Component {
     const {
       tableConfig: {
         caption,
-        data,
         config: {
           headers,
         },
       },
+      data
     } = this.props;
 
-    const headerDataOrderedBySortID = _.sortBy(headers, [(i) => { return i.sortID }]);
-    const tableHeadersArr = _.map(headerDataOrderedBySortID, 'dataParam');
+    const tableHeaderConfigOrdered = _.sortBy(headers, [(i) => { return i.headerOrder }]);
+    const tableHeadersArr = _.map(tableHeaderConfigOrdered, 'dataParam');
 
-    const headersEls = headerDataOrderedBySortID.map( ({ sortID, displayText, dataParam, sortable, filterable, filterConfig }, index ) => {
-      // const filterType = _.get(filterConfig, 'filterType', '');
+    const headersEls = tableHeaderConfigOrdered.map( ({ headerOrder, headerText, dataParam, sortable, filterable, filterConfig }, index ) => {
+      const filterType = _.get(filterConfig, 'filterType', '');
       const isSelected = (index === orderBy);
       const arrow = (isSelected ? (orderAsc ? 'is--asc' : 'is--desc') : "");
       const sortableClass = sortable ? 'sortable' : '';
       const headerClasses = `header ${isSelected ? ` is--active ${ arrow } ${ sortableClass }` : `${ sortableClass }`}`;
-      const filterHeaderEl = filterable ? this.buildFilterHeader(data, dataParam, displayText) : 
+      const filterHeaderEl = filterable ? this.buildFilterHeader(data, dataParam, headerText, filterType, tableHeaderConfigOrdered[index]) : 
                                           null;
       return (
         <th className={ headerClasses } 
-            key={ sortID }
+            key={ headerOrder }
             onClick={ sortable ? this.handleHeaderClick.bind(this, index) : null} >
-          { filterable ? filterHeaderEl : displayText }
+          { filterable ? filterHeaderEl : headerText }
         </th>
       );
     });
@@ -150,16 +202,7 @@ class SortableTable extends Component {
                                      _.sortBy(data, [(d) => { return d[tableHeadersArr[orderBy]]}]).reverse();
     const filteredRowData = isFilterActive ? this.recursiveFilterByActiveFilters(sortedRowData, activeFilters) :
                                              sortedRowData;
-
-    const rowsEls = filteredRowData.map((obj, index) => {
-      const columns = tableHeadersArr.map((param, i) => this.columnItem(obj, param, index))
-
-      return (
-        <tr key={ index }>
-          { columns }
-        </tr>
-      );
-    });
+    const rowsEls = this.buildRowEls(filteredRowData, tableHeadersArr, tableHeaderConfigOrdered);
 
     const captionEl = caption ? <caption>{ caption }</caption> : 
                                 null;

@@ -4,15 +4,14 @@ import Data from '../data/data.json';
 
 class App extends Component {
   render() {
-    // TODO: decouple Data from tableConfig
-    // TODO: change name of sortID to something like header order
+    const data = Data;
     const tableConfig = { caption: "Example Table with Optional Sortable Headers",
                           config: {
                             headers: [
                               // {
-                              //  sortID: Int - order that the column will appear in the table starting from 0
+                              //  headerOrder: Int - order that the column will appear in the table starting from 0
                               //  dataParam: Str - corresponding name of the param in the data obj,
-                              //  displayText: Str - display in the header for the column,
+                              //  headerText: Str - display in the header for the column,
                               //  sortable: Boolean - allow sorting on column data,
                               //  filterable: Boolean - allow filtering
                               //  filterConfig: {
@@ -21,68 +20,71 @@ class App extends Component {
                               //                }
                               // }
                               {
-                                sortID: 0,
+                                headerOrder: 0,
                                 dataParam: "thumbnail",
-                                displayText: "",
+                                headerText: "",
                                 sortable: false,
                                 filterable: false,
                               },
                               {
-                                sortID: 1,
+                                headerOrder: 1,
                                 dataParam: "name",
-                                displayText: "Name",
+                                headerText: "Name",
                                 sortable: true,
                                 filterable: false,
                               },
                               {
-                                sortID: 2,
+                                headerOrder: 2,
                                 dataParam: "sport",
-                                displayText: "Sport",
+                                headerText: "Sport",
                                 sortable: false,
                                 filterable: true,
                                 filterConfig: {
-                                                filterType: "auto",
-                                              },
+                                  filterType: "auto",
+                                },
                               },
                               {
-                                sortID: 3,
+                                headerOrder: 3,
                                 dataParam: "country",
-                                displayText: "Country",
+                                headerText: "Country",
                                 sortable: false,
                                 filterable: true,
                                 filterConfig: {
-                                                filterType: "auto",
-                                              },
+                                  filterType: "auto",
+                                },
                               },
-                              // {
-                              //   sortID: 4,
-                              //   dataParam: "reps",
-                              //   displayText: "Status",
-                              //   sortable: false,
-                              //   filterable: true,
-                              //   filterConfig: {
-                              //                   filterType: "param",
-                              //                   filterParam: "name",
-                              //                 },
-                              // },
                               {
-                                sortID: 4,
+                                headerOrder: 4,
+                                dataParam: "reps",
+                                headerText: "Reps",
+                                sortable: false,
+                                filterable: true,
+                                isObject: true,
+                                objectConfig: {
+                                  dataParam: "thumbnail",
+                                },
+                                filterConfig: {
+                                  filterType: "param",
+                                  filterParam: "name",
+                                },
+                              },
+                              {
+                                headerOrder: 5,
                                 dataParam: "status",
-                                displayText: "Status",
+                                headerText: "Status",
                                 sortable: false,
                                 filterable: true,
                                 filterConfig: {
-                                                filterType: "auto",
-                                              },
+                                  filterType: "auto",
+                                },
                               },
                             ],
                           },
-                          data: Data,
                         };
 
     return (
       <div className="App">
-        <SortableTable {... { tableConfig }} />
+        <SortableTable {... { tableConfig, data }} />
       </div>
     );
   }
