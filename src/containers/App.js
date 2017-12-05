@@ -4,46 +4,77 @@ import Data from '../data/data.json';
 
 class App extends Component {
   render() {
+    // TODO: decouple Data from tableConfig
+    // TODO: change name of sortID to something like header order
     const tableConfig = { caption: "Example Table with Optional Sortable Headers",
                           config: {
-                            itemsPerPage: 0, // Int - if present && gt 0, turns on pagination
                             headers: [
                               // {
                               //  sortID: Int - order that the column will appear in the table starting from 0
                               //  dataParam: Str - corresponding name of the param in the data obj,
-                              //  title: Str - display in the header for the column,
-                              //  sortable: Boolean - allow sorting on column data
+                              //  displayText: Str - display in the header for the column,
+                              //  sortable: Boolean - allow sorting on column data,
+                              //  filterable: Boolean - allow filtering
+                              //  filterConfig: {
+                              //                  filterType: Str - "auto" - pick filters from data
+                              //                  filterParam: Str - corresponding to the   
+                              //                }
                               // }
                               {
                                 sortID: 0,
                                 dataParam: "thumbnail",
-                                title: "",
+                                displayText: "",
                                 sortable: false,
+                                filterable: false,
                               },
                               {
                                 sortID: 1,
-                                dataParam: "first_name",
-                                title: "First Name",
+                                dataParam: "name",
+                                displayText: "Name",
                                 sortable: true,
+                                filterable: false,
                               },
                               {
                                 sortID: 2,
-                                dataParam: "last_name",
-                                title: "Last Name",
-                                sortable: true,
+                                dataParam: "sport",
+                                displayText: "Sport",
+                                sortable: false,
+                                filterable: true,
+                                filterConfig: {
+                                                filterType: "auto",
+                                              },
                               },
                               {
                                 sortID: 3,
-                                dataParam: "phone",
-                                title: "Phone",
-                                sortable: true,
+                                dataParam: "country",
+                                displayText: "Country",
+                                sortable: false,
+                                filterable: true,
+                                filterConfig: {
+                                                filterType: "auto",
+                                              },
                               },
                               // {
                               //   sortID: 4,
-                              //   dataParam: "email",
-                              //   title: "E-Mail",
-                              //   sortable: true,
+                              //   dataParam: "reps",
+                              //   displayText: "Status",
+                              //   sortable: false,
+                              //   filterable: true,
+                              //   filterConfig: {
+                              //                   filterType: "param",
+                              //                   filterParam: "name",
+                              //                 },
                               // },
+                              {
+                                sortID: 4,
+                                dataParam: "status",
+                                displayText: "Status",
+                                sortable: false,
+                                filterable: true,
+                                filterConfig: {
+                                                filterType: "auto",
+                                              },
+                              },
                             ],
                           },
                           data: Data,
