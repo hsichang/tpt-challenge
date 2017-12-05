@@ -8,17 +8,23 @@ class App extends Component {
     const tableConfig = { caption: "Example Table with Optional Sortable Headers",
                           config: {
                             headers: [
-                              // {
-                              //  headerOrder: Int - order that the column will appear in the table starting from 0
-                              //  dataParam: Str - corresponding name of the param in the data obj,
-                              //  headerText: Str - display in the header for the column,
-                              //  sortable: Boolean - allow sorting on column data,
-                              //  filterable: Boolean - allow filtering
-                              //  filterConfig: {
-                              //                  filterType: Str - "auto" - pick filters from data
-                              //                  filterParam: Str - corresponding to the   
-                              //                }
-                              // }
+                            /*  
+                              {
+                                headerOrder: Int - order that the column will appear in the table starting from 0
+                                dataParam: Str - corresponding name of the param in the data obj,
+                                headerText: Str - display text in the header for the column,
+                                sortable: Boolean - allow sorting on column data,
+                                filterable: Boolean - allow filtering,
+                                isObject: Boolean - if object, then table will produce multiple pieces of data in the table cell
+                                objectConfig: {
+                                  dataParam: Str - corresponding to the name of the param in the nested data object for display
+                                },
+                                filterConfig: {
+                                  filterType: Str - "auto" - pick filter values from data
+                                  filterParam: Str - corresponding to the   
+                                }
+                              }
+                            */
                               {
                                 headerOrder: 0,
                                 dataParam: "thumbnail",
