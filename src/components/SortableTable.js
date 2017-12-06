@@ -53,9 +53,9 @@ class SortableTable extends Component {
     )
   }
 
-  buildRowEls(filteredRowData, tableHeadersArr, tableHeaderConfigOrdered) {
+  buildRowEls(filteredRowData, tableHeadersArr, headers) {
     return filteredRowData.map((obj, index) => {
-      const columns = tableHeadersArr.map((param, i) => this.buildColumnItem(obj, param, index, tableHeaderConfigOrdered[i]));
+      const columns = tableHeadersArr.map((param, i) => this.buildColumnItem(obj, param, index, headers[i]));
 
       return (
         <tr key={ index }>
@@ -96,15 +96,16 @@ class SortableTable extends Component {
   recursiveFilterByActiveFilters(data, filters) {
     let dataFilteredByParam = data;
     filters.map( ({ dataParam, value, isObject, filterParam }) => {
-      dataFilteredByParam = isObject ? dataFilteredByParam.filter((rowData) => {
-                                                                    return rowData[dataParam].some((subData) => {
-                                                                      return subData[filterParam] === value;
-                                                                    })
-                                                                  })
-                                        :
-                                        dataFilteredByParam.filter( datum => { 
-                                          return datum[dataParam] === value;
-                                        });
+      dataFilteredByParam = isObject ? 
+        dataFilteredByParam.filter((rowData) => {
+          return rowData[dataParam].some((subData) => {
+            return subData[filterParam] === value;
+          })
+        })
+        :
+        dataFilteredByParam.filter( datum => { 
+          return datum[dataParam] === value;
+        });
       return true;
     })
 
@@ -162,35 +163,35 @@ class SortableTable extends Component {
   // Styling (approx: 30mins)
   render() {
     const {
-      orderBy,
-      orderAsc,
-      activeFilters,
-    } = this.state;
-
-    const {
-      tableConfig: {
-        caption,
-        config: {
-          headers,
-        },
+      state: {
+        orderBy,
+        orderAsc,
+        activeFilters,        
       },
-      data
-    } = this.props;
+      props: {
+        tableConfig: {
+          caption,
+          config: {
+            headers,
+          },
+        },
+        data,
+      },
+    } = this;
 
-    const tableHeaderConfigOrdered = _.sortBy(headers, [(i) => { return i.headerOrder }]);
-    const tableHeadersArr = _.map(tableHeaderConfigOrdered, 'dataParam');
+    const tableHeadersArr = _.map(headers, 'dataParam');
 
-    const headersEls = tableHeaderConfigOrdered.map( ({ headerOrder, headerText, dataParam, sortable, filterable, filterConfig }, index ) => {
+    const headersEls = headers.map( ({ headerText, dataParam, sortable, filterable, filterConfig }, index ) => {
       const filterType = _.get(filterConfig, 'filterType', '');
       const isSelected = (index === orderBy);
       const arrow = (isSelected ? (orderAsc ? 'is--asc' : 'is--desc') : "");
       const sortableClass = sortable ? 'sortable' : '';
       const headerClasses = `header ${isSelected ? ` is--active ${ arrow } ${ sortableClass }` : `${ sortableClass }`}`;
-      const filterHeaderEl = filterable ? this.buildFilterHeader(data, dataParam, headerText, filterType, tableHeaderConfigOrdered[index]) : 
+      const filterHeaderEl = filterable ? this.buildFilterHeader(data, dataParam, headerText, filterType, headers[index]) : 
                                           null;
       return (
         <th className={ headerClasses } 
-            key={ headerOrder }
+            key={ index }
             onClick={ sortable ? this.handleHeaderClick.bind(this, index) : null} >
           { filterable ? filterHeaderEl : headerText }
         </th>
@@ -202,7 +203,7 @@ class SortableTable extends Component {
                                      _.sortBy(data, [(d) => { return d[tableHeadersArr[orderBy]]}]).reverse();
     const filteredRowData = isFilterActive ? this.recursiveFilterByActiveFilters(sortedRowData, activeFilters) :
                                              sortedRowData;
-    const rowsEls = this.buildRowEls(filteredRowData, tableHeadersArr, tableHeaderConfigOrdered);
+    const rowsEls = this.buildRowEls(filteredRowData, tableHeadersArr, headers);
 
     const captionEl = caption ? <caption>{ caption }</caption> : 
                                 null;
